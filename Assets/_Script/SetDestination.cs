@@ -72,16 +72,16 @@ public class TwoStepPointer : DestinationPointer
     }
     public override void UpdatePointer()
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+      /*  if(Input.GetKeyDown(KeyCode.Space))
         {
             Vector3 destobj = _dest.DestinationObj.position;
-            float dist = Vector3.Distance( destobj, );
+            float dist = Vector3.Distance( destobj,);
             Vector3 plane_point = destobj + _dest.DestinationObj.forward* dist;
         }
         if (Input.GetKeyUp(KeyCode.Space))
         {
             
-        }
+        }*/
 
     }
 }
@@ -102,7 +102,7 @@ public class SetDestination : MonoBehaviour
     }
     public void Send_MoveOrder() 
     {
-        foreach (Unit_StateManager _unit in PlayerController.Singleton.Selected_MovableObject)
+        foreach (Unit_StateManager _unit in PC.Singleton.Selected_MovableObject)
             _unit.Set_MoveTarget(_movecontrol.SetPointer());
     }
 }

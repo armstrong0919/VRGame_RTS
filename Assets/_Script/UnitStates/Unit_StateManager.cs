@@ -9,7 +9,6 @@ public interface IMoveable
 
 public class Unit_StateManager : MonoBehaviour
 {
-    public Transform Example;
 
     public UnitProperties UnitProperties;
 
