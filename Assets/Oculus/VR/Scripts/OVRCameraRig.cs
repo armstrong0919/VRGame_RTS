@@ -118,7 +118,8 @@ public class OVRCameraRig : MonoBehaviour
 #region Unity Messages
 	protected virtual void Awake()
 	{
-		_skipUpdate = true;
+
+        _skipUpdate = true;
 		EnsureGameObjectIntegrity();
 	}
 

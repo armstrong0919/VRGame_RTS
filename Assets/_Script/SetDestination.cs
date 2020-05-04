@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using OVR;
 
 
 public abstract class DestinationPointer
@@ -21,11 +22,16 @@ public class BasicPointer : DestinationPointer
     }
     public override Vector3 SetPointer()
     {
-        return _dest.DestinationObj.position;
+        return _dest.ControlObj.position;
     }
     public override void UpdatePointer()
     {
+#if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Space))
+            _dest.Send_MoveOrder();
+#endif
+
+        if(OVRInput.GetDown( OVRInput.Button.SecondaryIndexTrigger))
             _dest.Send_MoveOrder();
     }
 }
@@ -44,26 +50,41 @@ public class ExtensionPointer : DestinationPointer
     Vector3 destination;
     public override void UpdatePointer()
     {
+#if UNITY_EDITOR
         if (Input.GetKey(KeyCode.Space))
         {
             dist_extend += Time.deltaTime * PressSpeed;
-            destination = _dest.DestinationObj.TransformPoint(0,0,dist_extend);
+            destination = _dest.ControlObj.TransformPoint(0,0,dist_extend);
+            _dest.DebugObj.position = destination;
         }
         if(Input.GetKeyUp(KeyCode.Space))
             _dest.Send_MoveOrder();
+#endif
+
+        if (OVRInput.Get(OVRInput.Button.SecondaryIndexTrigger))
+        {
+            dist_extend += Time.deltaTime * PressSpeed;
+            destination = _dest.ControlObj.TransformPoint(0, 0, dist_extend);
+            _dest.DebugObj.position = destination;
+        }
+        if (OVRInput.GetUp(OVRInput.Button.SecondaryIndexTrigger))
+        {
+            _dest.Send_MoveOrder();
+            destination = Vector3.zero;
+            dist_extend = 0.0f;
+        }
 
     }
 }
 public class TwoStepPointer : DestinationPointer
 {
-    public float FloorHeight;
-    Vector3 plane;
-
+    bool has_hit;
     Vector3 return_val;
+    Vector3 first_hit_point;
    
     public TwoStepPointer(SetDestination _destination) : base(_destination)
     {
-        plane = new Vector3(0, FloorHeight, 0);
+        
     }
     public override Vector3 SetPointer()
     {
@@ -72,37 +93,101 @@ public class TwoStepPointer : DestinationPointer
     }
     public override void UpdatePointer()
     {
-      /*  if(Input.GetKeyDown(KeyCode.Space))
+#if UNITY_EDITOR
+        if(Input.GetKeyDown(KeyCode.Space))
         {
-            Vector3 destobj = _dest.DestinationObj.position;
-            float dist = Vector3.Distance( destobj,);
-            Vector3 plane_point = destobj + _dest.DestinationObj.forward* dist;
+            RaycastHit hit;
+            Ray new_ray = new Ray(_dest.ControlObj.position, _dest.ControlObj.forward);
+            if (Physics.Raycast(new_ray,out hit))
+            {
+                if (hit.collider.gameObject == HorizontalFloor.Singleton.gameObject)
+                {
+                    first_hit_point = hit.point;
+                    _dest.DebugObj.position = first_hit_point;
+                    has_hit = true;
+                }
+            }
         }
-        if (Input.GetKeyUp(KeyCode.Space))
+        if(Input.GetKey(KeyCode.Space))
         {
-            
-        }*/
+            Vector3 hitpoint_noheight = new Vector3(first_hit_point.x, 0, first_hit_point.z);
+            Vector3 controller_noheight = new Vector3(_dest.ControlObj.position.x, 0, _dest.ControlObj.position.z);
+            float _distance = Vector3.Distance(hitpoint_noheight, controller_noheight);
+            float euler_y =  _dest.ControlObj.eulerAngles.x;
+            float rad = euler_y * Mathf.Deg2Rad;
+            float height = euler_y > 0 ? Mathf.Tan(rad) * _distance * -1 : Mathf.Tan(rad) * _distance;
 
+            Debug.Log(_distance + ":" + euler_y + ":" + height + ":" +  _dest.ControlObj.position.y);
+            return_val = new Vector3(first_hit_point.x, _dest.ControlObj.position.y + height, first_hit_point.z);
+
+            _dest.DebugObj.position = return_val;
+            //return_val = new Vector3(first_hit_point.x, _dest.DestinationObj.position.y, first_hit_point.z);
+        }
+        if (Input.GetKeyUp(KeyCode.Space) && has_hit)
+        {
+            _dest.DebugObj.position = return_val;
+            _dest.Send_MoveOrder();
+            has_hit = false;
+        }
+#endif
+        if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))
+        {
+            RaycastHit hit;
+            Ray new_ray = new Ray(_dest.ControlObj.position, _dest.ControlObj.forward);
+            if (Physics.Raycast(new_ray, out hit))
+            {
+                if (hit.collider.gameObject == HorizontalFloor.Singleton.gameObject)
+                {
+                    first_hit_point = hit.point;
+                    _dest.DebugObj.position = first_hit_point;
+                    has_hit = true;
+                }
+            }
+        }
+        if (OVRInput.Get(OVRInput.Button.SecondaryIndexTrigger))
+        {
+
+            Vector3 hitpoint_noheight = new Vector3(first_hit_point.x, 0, first_hit_point.z);
+            Vector3 controller_noheight = new Vector3(_dest.ControlObj.position.x, 0, _dest.ControlObj.position.z);
+            float _distance = Vector3.Distance(hitpoint_noheight, controller_noheight);
+            float euler_y = _dest.ControlObj.eulerAngles.x;
+            float rad = euler_y * Mathf.Deg2Rad;
+            float height = euler_y > 0 ? Mathf.Tan(rad) * _distance * -1 : Mathf.Tan(rad) * _distance;
+
+            Debug.Log(_distance + ":" + euler_y + ":" + height + ":" + _dest.ControlObj.position.y);
+            return_val = new Vector3(first_hit_point.x, _dest.ControlObj.position.y + height, first_hit_point.z);
+
+            _dest.DebugObj.position = return_val;
+            //return_val = new Vector3(first_hit_point.x, _dest.DestinationObj.position.y, first_hit_point.z);
+        }
+        if (OVRInput.GetUp(OVRInput.Button.SecondaryIndexTrigger))
+        {
+            _dest.DebugObj.position = return_val;
+            _dest.Send_MoveOrder();
+            has_hit = false;
+        }
     }
 }
 public class SetDestination : MonoBehaviour
 {
-    public Transform DestinationObj;
+    public Transform ControlObj;
+    public Transform DebugObj;
     
     private DestinationPointer _movecontrol;
     private void Start()
     {
-        _movecontrol = new ExtensionPointer(this);
+        _movecontrol = new TwoStepPointer(this);
     }
 
     // Update is called once per frame
     void Update()
     {
+        Debug.DrawLine(ControlObj.position, ControlObj.forward * 100, Color.green);
         _movecontrol.UpdatePointer();
     }
     public void Send_MoveOrder() 
     {
-        foreach (Unit_StateManager _unit in PC.Singleton.Selected_MovableObject)
+        foreach (Unit_StateManager _unit in OculusPlayerController.Singleton.Selected_MovableObject)
             _unit.Set_MoveTarget(_movecontrol.SetPointer());
     }
 }
