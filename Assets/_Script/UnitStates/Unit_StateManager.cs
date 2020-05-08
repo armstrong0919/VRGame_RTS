@@ -7,6 +7,7 @@ public interface IMoveable
     void Set_MoveTarget(Vector3 target_pos);
 }
 
+[RequireComponent(typeof(Unit))]
 public class Unit_StateManager : MonoBehaviour
 {
 
