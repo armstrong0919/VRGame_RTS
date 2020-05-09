@@ -1,0 +1,11 @@
+/Library
+/Logs
+/.vs
+/obj
+/Packages
+/Assembly-CSharp.csproj
+/Assembly-CSharp-Editor.csproj
+/Oculus.VR.csproj
+/Oculus.VR.Editor.csproj
+/Oculus.VR.Scripts.Editor.csproj
+/VRGame_RTS.sln
